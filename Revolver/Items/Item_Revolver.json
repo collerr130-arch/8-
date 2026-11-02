@@ -1,0 +1,274 @@
+{
+  "$type": "ThunderRoad.ItemData, ThunderRoad",
+  "id": "Revolver",
+  "sensitiveContent": "None",
+  "sensitiveFilterBehaviour": "Discard",
+  "version": 4,
+  "localizationId": null,
+  "displayName": "Revolver",
+  "description": "Six-shot revolver. Trigger to fire, alternate use or a quick wrist flick to reload.",
+  "author": "Danil",
+  "valueType": "Gold",
+  "value": 0.0,
+  "rewardValue": 0.0,
+  "tier": 1,
+  "flags": "None",
+  "levelRequired": 0,
+  "category": "Daggers",
+  "iconEffectId": null,
+  "preferredItemCenter": "Mass",
+  "drainImbueWhenIdle": true,
+  "prefabAddress": "Danil.Revolver",
+  "iconAddress": null,
+  "closeUpIconAddress": null,
+  "pooledCount": 0,
+  "androidPooledCount": 0,
+  "type": "Weapon",
+  "allowedStorage": "Container, SandboxAllItems",
+  "despawnOnStoredInInventory": false,
+  "isStackable": false,
+  "consumableId": null,
+  "inventoryAudioContainerAddress": null,
+  "inventoryAudioVolume_dB": 0.0,
+  "slot": "Small",
+  "snapAudioContainerAddress": "Bas.AudioGroup.Snap.Dagger",
+  "snapAudioVolume_dB": 0.0,
+  "overrideMassAndDrag": true,
+  "mass": 1.1,
+  "drag": 0.4,
+  "angularDrag": 0.05,
+  "focusRegenMultiplier": 1.0,
+  "spellChargeSpeedPlayerMultiplier": 1.0,
+  "spellChargeSpeedNPCMultiplier": 1.0,
+  "collisionMaxOverride": 0,
+  "collisionEnterOnly": false,
+  "collisionNoMinVelocityCheck": false,
+  "forceLayer": "None",
+  "diffForceLayerWhenHeld": false,
+  "forceLayerHeld": "None",
+  "waterHandSpringMultiplierCurve": {
+    "$type": "UnityEngine.AnimationCurve, UnityEngine.CoreModule",
+    "keys": [
+      {
+        "$type": "UnityEngine.Keyframe, UnityEngine.CoreModule",
+        "time": 0.0,
+        "value": 0.3,
+        "inTangent": 0.0,
+        "outTangent": 0.0,
+        "inWeight": 0.0,
+        "outWeight": 0.0,
+        "weightedMode": "None",
+        "tangentMode": 0
+      },
+      {
+        "$type": "UnityEngine.Keyframe, UnityEngine.CoreModule",
+        "time": 1.0,
+        "value": 0.285,
+        "inTangent": 0.0,
+        "outTangent": 0.0,
+        "inWeight": 0.0,
+        "outWeight": 0.0,
+        "weightedMode": "None",
+        "tangentMode": 0
+      }
+    ],
+    "length": 2,
+    "preWrapMode": "ClampForever",
+    "postWrapMode": "ClampForever"
+  },
+  "waterDragMultiplierCurve": {
+    "$type": "UnityEngine.AnimationCurve, UnityEngine.CoreModule",
+    "keys": [
+      {
+        "$type": "UnityEngine.Keyframe, UnityEngine.CoreModule",
+        "time": 0.0,
+        "value": 1.0,
+        "inTangent": 0.0,
+        "outTangent": 0.0,
+        "inWeight": 0.0,
+        "outWeight": 0.0,
+        "weightedMode": "None",
+        "tangentMode": 0
+      },
+      {
+        "$type": "UnityEngine.Keyframe, UnityEngine.CoreModule",
+        "time": 1.0,
+        "value": 1.25,
+        "inTangent": 0.0,
+        "outTangent": 0.0,
+        "inWeight": 0.0,
+        "outWeight": 0.0,
+        "weightedMode": "None",
+        "tangentMode": 0
+      }
+    ],
+    "length": 2,
+    "preWrapMode": "ClampForever",
+    "postWrapMode": "ClampForever"
+  },
+  "waterSampleMinRadius": 0.2,
+  "throwMultiplier": 1.0,
+  "runSpeedMultiplier": 1.0,
+  "flyRotationSpeed": 3.0,
+  "flyThrowAngle": 145.0,
+  "allowFlyBackwards": false,
+  "telekinesisSafeDistance": 1.0,
+  "telekinesisThrowRatio": 1.0,
+  "telekinesisAutoGrabAnyHandle": false,
+  "grippable": true,
+  "grabAndGripClimb": false,
+  "playerGrabAndGripChangeLayer": true,
+  "customSnaps": [
+    {
+      "$type": "ThunderRoad.ItemData+CustomSnap, ThunderRoad",
+      "holderName": "HipsLeft",
+      "localPosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "localRotation": {
+        "x": 30.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "$type": "ThunderRoad.ItemData+CustomSnap, ThunderRoad",
+      "holderName": "HipsRight",
+      "localPosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "localRotation": {
+        "x": 30.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "drainImbueOnSnap": true,
+  "imbueEnergyOverTimeOnSnap": {
+    "$type": "UnityEngine.AnimationCurve, UnityEngine.CoreModule",
+    "keys": [
+      {
+        "$type": "UnityEngine.Keyframe, UnityEngine.CoreModule",
+        "time": 0.0,
+        "value": 1.0,
+        "inTangent": 0.0,
+        "outTangent": 0.0,
+        "inWeight": 0.0,
+        "outWeight": 0.0,
+        "weightedMode": "None",
+        "tangentMode": 0
+      },
+      {
+        "$type": "UnityEngine.Keyframe, UnityEngine.CoreModule",
+        "time": 3.0,
+        "value": 0.0,
+        "inTangent": 0.0,
+        "outTangent": 0.0,
+        "inWeight": 0.0,
+        "outWeight": 0.0,
+        "weightedMode": "None",
+        "tangentMode": 0
+      }
+    ],
+    "length": 2,
+    "preWrapMode": "ClampForever",
+    "postWrapMode": "ClampForever"
+  },
+  "modules": [
+    {
+      "$type": "ThunderRoad.ItemModuleAI, ThunderRoad",
+      "primaryClass": "Melee",
+      "secondaryClass": "None",
+      "weaponHandling": "OneHanded",
+      "secondaryHandling": "None",
+      "weaponAttackTypes": "Swing, Thrust",
+      "ignoredByDefense": false,
+      "alwaysPrimary": false,
+      "defaultStanceInfo": {
+        "$type": "ThunderRoad.ItemModuleAI+StanceInfo, ThunderRoad",
+        "offhand": "Anything",
+        "grabAIHandleRadius": 0.0,
+        "stanceDataID": "HumanMelee1hStance"
+      },
+      "stanceInfosByOffhand": [
+        {
+          "$type": "ThunderRoad.ItemModuleAI+StanceInfo, ThunderRoad",
+          "offhand": "Empty",
+          "grabAIHandleRadius": 0.0,
+          "stanceDataID": "HumanMelee1hStance"
+        },
+        {
+          "$type": "ThunderRoad.ItemModuleAI+StanceInfo, ThunderRoad",
+          "offhand": "AnyShield",
+          "grabAIHandleRadius": 0.0,
+          "stanceDataID": "HumanMeleeShieldStance"
+        },
+        {
+          "$type": "ThunderRoad.ItemModuleAI+StanceInfo, ThunderRoad",
+          "offhand": "AnyMelee",
+          "grabAIHandleRadius": 0.0,
+          "stanceDataID": "HumanMeleeDualWieldStance"
+        }
+      ],
+      "rangedWeaponData": null,
+      "armResistanceMultiplier": 2.0,
+      "allowDynamicHeight": false,
+      "defenseHasPriority": false
+    },
+    {
+      "$type": "Revolver.ItemModuleRevolver, Revolver",
+      "damage": 35.0,
+      "headshotMultiplier": 3.0,
+      "neckMultiplier": 2.0,
+      "range": 150.0,
+      "maxAmmo": 6,
+      "fireCooldown": 0.25,
+      "reloadTime": 0.6,
+      "recoilAngle": 7.0,
+      "recoilForce": 1.2,
+      "impactForce": 45.0,
+      "knockDown": true,
+      "aimAssistAngle": 4.0,
+      "flickReloadSpeed": 14.0,
+      "redTracer": true,
+      "volume": 1.0,
+      "muzzleName": "Muzzle",
+      "drumName": "Drum"
+    }
+  ],
+  "colliderGroups": [
+    {
+      "$type": "ThunderRoad.ItemData+ColliderGroup, ThunderRoad",
+      "transformName": "Mesh",
+      "colliderGroupId": "PropMetal"
+    }
+  ],
+  "damagers": [
+    {
+      "$type": "ThunderRoad.ItemData+Damager, ThunderRoad",
+      "transformName": "Blunt",
+      "damagerID": "HandleLight"
+    }
+  ],
+  "Interactables": [
+    {
+      "$type": "ThunderRoad.ItemData+Interactable, ThunderRoad",
+      "transformName": "Handle",
+      "interactableId": "ObjectHandleLight"
+    },
+    {
+      "$type": "ThunderRoad.ItemData+Interactable, ThunderRoad",
+      "transformName": "BottomHandle",
+      "interactableId": "ObjectHandleLight"
+    }
+  ],
+  "effectHinges": [],
+  "whooshs": [],
+  "entityModules": [],
+  "groupPath": null
+}

@@ -46,6 +46,24 @@ powershell -ExecutionPolicy Bypass -File install.ps1
    ```
 4. **Открой SDK:** Unity Hub → Projects → Add → Add project from disk → папка `BasSDK`. Первое открытие идёт 10–30 минут, это нормально.
 
+### Быстрый путь: скрипт делает 2.3–2.4 за тебя
+1. Положи модель в `Assets/revolver` (п. 2.2).
+2. Скопируй скрипт в SDK:
+   ```powershell
+   cd $HOME\bas-mod; git pull
+   New-Item -ItemType Directory -Force $HOME\BasSDK\Assets\Editor | Out-Null
+   Copy-Item Revolver\Unity\Editor\RevolverPrefabBuilder.cs $HOME\BasSDK\Assets\Editor\ -Force
+   ```
+3. Вернись в Unity и подожди, пока он перекомпилирует скрипты (крутилка внизу справа).
+4. Нажми **Tools → Revolver → Build Revolver Prefab**. Скрипт:
+   - скопирует ProtoGun, вставит модель и повернёт её стволом вперёд;
+   - сделает реальный размер, ~30 см;
+   - поставит руку на рукоять, а точку выстрела на конец ствола;
+   - подгонит коллайдеры и подключит текстуры;
+   - настроит Addressables и Asset Bundle Group.
+5. Если ствол смотрит назад или револьвер вверх ногами: **Tools → Revolver → Fix: ...**.
+6. Дальше сразу п. 2.5 (сборка).
+
 ### 2.2. Модель револьвера
 1. Найди бесплатную модель на https://sketchfab.com: поиск `revolver`, фильтр **Downloadable**. Скачай в формате **FBX**. Лучше брать модель low-poly, до ~20 тысяч треугольников.
 2. В Unity, в окне **Project** внизу, создай папку `Assets/Revolver` (правый клик → Create → Folder). Перетащи туда FBX и текстуры.

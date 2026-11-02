@@ -48,8 +48,14 @@ namespace Revolver
 
             if (model == null)
             {
-                Debug.Log("[Revolver] No firearm model in the game or other mods, keeping the dagger model.");
-                return;
+                // Copy the dagger from the installed game, so its damagers etc. match this game version.
+                model = Catalog.GetData<ItemData>("DaggerCommon", false);
+                if (model == null)
+                {
+                    Debug.Log("[Revolver] No firearm and no DaggerCommon found, keeping the JSON model.");
+                    return;
+                }
+                Debug.Log("[Revolver] No firearm model in the game or other mods, using the dagger.");
             }
 
             // The transform names in these lists belong to the prefab, so they move together.

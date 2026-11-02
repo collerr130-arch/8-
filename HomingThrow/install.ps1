@@ -10,12 +10,20 @@ if (-not (Test-Path "$GameDir\BladeAndSorcery_Data\Managed\ThunderRoad.dll")) {
     Write-Host '  powershell -ExecutionPolicy Bypass -File install.ps1 -GameDir "<path>"'
     exit 1
 }
-if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-    Write-Host "Install the .NET SDK first: winget install Microsoft.DotNet.SDK.8" -ForegroundColor Red
-    exit 1
+# Find the .NET SDK, or install it for this user (no admin rights, no winget needed).
+$dotnet = (Get-Command dotnet -ErrorAction SilentlyContinue).Source
+$localDotnet = "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe"
+if (-not $dotnet -and (Test-Path $localDotnet)) { $dotnet = $localDotnet }
+if (-not $dotnet) {
+    Write-Host "Installing .NET SDK 8 (one time, a few minutes)..." -ForegroundColor Yellow
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $installer = "$env:TEMP\dotnet-install.ps1"
+    Invoke-WebRequest "https://dot.net/v1/dotnet-install.ps1" -OutFile $installer -UseBasicParsing
+    & $installer -Channel 8.0 -InstallDir "$env:LOCALAPPDATA\Microsoft\dotnet"
+    $dotnet = $localDotnet
 }
 
-dotnet build -c Release "-p:GameDir=$GameDir"
+& $dotnet build -c Release "-p:GameDir=$GameDir"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $modDir = "$GameDir\BladeAndSorcery_Data\StreamingAssets\Mods\HomingThrow"

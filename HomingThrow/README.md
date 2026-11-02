@@ -17,7 +17,7 @@
 дальность, конус прицеливания и возврат к игроку.
 
 ## Установка (Windows)
-1. Поставь .NET SDK: `winget install Microsoft.DotNet.SDK.8`
+1. .NET SDK ставить заранее не нужно: `install.ps1` сам скачает его при первом запуске.
 2. В этой папке выполни:
    ```powershell
    powershell -ExecutionPolicy Bypass -File install.ps1

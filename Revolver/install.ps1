@@ -36,7 +36,4 @@ Copy-Item "bin\Release\Revolver.dll" $modDir -Force
 Copy-Item "manifest.json" $modDir -Force
 New-Item -ItemType Directory -Force "$modDir\Items" | Out-Null
 Copy-Item "Items\Item_Revolver.json" "$modDir\Items" -Force
-if (-not (Get-ChildItem $modDir -Filter "*.bundle" -Recurse -ErrorAction SilentlyContinue)) {
-    Write-Host "Code installed. The 3D model is not built yet: export it from Unity (see README.md, part 2)." -ForegroundColor Yellow
-}
 Write-Host "Installed to $modDir" -ForegroundColor Green

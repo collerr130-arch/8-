@@ -20,13 +20,16 @@ namespace Revolver
         private float reloadDoneTime;
         private bool reloading;
 
+        // Borrowed models have no muzzle: build one from the colliders once the item is in the world.
+        private Transform Muzzle => muzzle != null ? muzzle : (muzzle = CreateAutoMuzzle());
+
         public void Init(ItemModuleRevolver revolverModule, Item revolverItem)
         {
             if (item != null) item.OnHeldActionEvent -= OnHeldAction;
             module = revolverModule;
             item = revolverItem;
             body = GetComponent<Rigidbody>();
-            muzzle = FindChild(transform, module.muzzleName) ?? FindChild(transform, "Aim") ?? transform;
+            muzzle = FindChild(transform, module.muzzleName) ?? FindChild(transform, "Aim"); // else made on first use
             drum = FindChild(transform, module.drumName);
             ammo = module.maxAmmo;
             item.OnHeldActionEvent += OnHeldAction;
@@ -51,14 +54,14 @@ namespace Revolver
             {
                 reloading = false;
                 ammo = module.maxAmmo;
-                RevolverFx.PlayReloadDone(muzzle.position, module.volume);
+                RevolverFx.PlayReloadDone(Muzzle.position, module.volume);
                 Haptic(item.mainHandler, 0.6f);
             }
 
             // Flick the wrist around the barrel to snap the cylinder out and reload.
             if (!reloading && ammo < module.maxAmmo && body != null && item.handlers.Count > 0)
             {
-                float roll = Mathf.Abs(Vector3.Dot(body.angularVelocity, muzzle.forward));
+                float roll = Mathf.Abs(Vector3.Dot(body.angularVelocity, Muzzle.forward));
                 if (roll > module.flickReloadSpeed) StartReload(item.mainHandler);
             }
         }
@@ -70,14 +73,14 @@ namespace Revolver
 
             if (ammo <= 0)
             {
-                RevolverFx.PlayEmpty(muzzle.position, module.volume);
+                RevolverFx.PlayEmpty(Muzzle.position, module.volume);
                 Haptic(hand, 0.2f);
                 return;
             }
             ammo--;
 
-            Vector3 origin = muzzle.position;
-            Vector3 direction = AimAssist(origin, muzzle.forward);
+            Vector3 origin = Muzzle.position;
+            Vector3 direction = AimAssist(origin, Muzzle.forward);
             Vector3 end = origin + direction * module.range;
 
             if (Cast(origin, direction, out RaycastHit hit))
@@ -91,7 +94,7 @@ namespace Revolver
             if (module.redTracer) RevolverFx.Tracer(origin, end);
             Haptic(hand, 1f);
             Recoil();
-            if (drum != null) drum.Rotate(muzzle.forward, 60f, Space.World);
+            if (drum != null) drum.Rotate(Muzzle.forward, 60f, Space.World);
         }
 
         private void StartReload(RagdollHand hand)
@@ -99,7 +102,7 @@ namespace Revolver
             if (reloading || ammo >= module.maxAmmo) return;
             reloading = true;
             reloadDoneTime = Time.time + module.reloadTime;
-            RevolverFx.PlayReloadStart(muzzle.position, module.volume);
+            RevolverFx.PlayReloadStart(Muzzle.position, module.volume);
             Haptic(hand, 0.4f);
         }
 
@@ -184,8 +187,8 @@ namespace Revolver
         private void Recoil()
         {
             if (body == null) return;
-            body.AddTorque(-muzzle.right * module.recoilAngle, ForceMode.VelocityChange);
-            body.AddForce(-muzzle.forward * module.recoilForce, ForceMode.VelocityChange);
+            body.AddTorque(-Muzzle.right * module.recoilAngle, ForceMode.VelocityChange);
+            body.AddForce(-Muzzle.forward * module.recoilForce, ForceMode.VelocityChange);
         }
 
         private static void Haptic(RagdollHand hand, float intensity)
@@ -199,6 +202,46 @@ namespace Revolver
             RagdollPart part = collider.GetComponentInParent<RagdollPart>();
             if (part != null && part.ragdoll != null) return part.ragdoll.creature;
             return collider.GetComponentInParent<Creature>();
+        }
+
+        /// <summary>
+        /// For a borrowed model (a dagger, a sword...) there is no muzzle: shoot from the
+        /// far end of the item, in the direction from the handle to that end (the blade tip).
+        /// </summary>
+        private Transform CreateAutoMuzzle()
+        {
+            Transform existing = FindChild(transform, "AutoMuzzle");
+            if (existing != null) return existing;
+
+            Handle handle = item.mainHandleRight != null ? item.mainHandleRight : GetComponentInChildren<Handle>();
+            Vector3 grip = handle != null ? handle.transform.position : transform.position;
+
+            Collider[] colliders = GetComponentsInChildren<Collider>(true);
+            Bounds bounds = new Bounds(transform.position, Vector3.zero);
+            bool any = false;
+            foreach (Collider c in colliders)
+            {
+                if (c.isTrigger) continue;
+                if (!any) { bounds = c.bounds; any = true; }
+                else bounds.Encapsulate(c.bounds);
+            }
+
+            Vector3 direction = (bounds.center - grip).sqrMagnitude > 0.0001f
+                ? (bounds.center - grip).normalized
+                : transform.forward;
+            float reach = 0.1f;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 corner = bounds.center + Vector3.Scale(bounds.extents, new Vector3(
+                    (i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                reach = Mathf.Max(reach, Vector3.Dot(corner - grip, direction));
+            }
+
+            Transform muzzleTransform = new GameObject("AutoMuzzle").transform;
+            muzzleTransform.SetParent(transform, true);
+            muzzleTransform.position = grip + direction * (reach + 0.02f);
+            muzzleTransform.rotation = Quaternion.LookRotation(direction, transform.up);
+            return muzzleTransform;
         }
 
         private static Transform FindChild(Transform root, string name)

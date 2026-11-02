@@ -1,5 +1,13 @@
 # Revolver: мод для Blade & Sorcery (PC)
 
+> **Сейчас мод работает без Unity.** Предмет **Revolver (Dagger)** выглядит как обычный кинжал Eraden,
+> но стреляет из кончика клинка как револьвер. Он лежит в книге предметов во вкладке **Daggers**.
+> Поставить: `cd $HOME\bas-mod; git pull; cd Revolver; powershell -ExecutionPolicy Bypass -File install.ps1`
+>
+> Если позже захочешь настоящую 3D-модель, это часть 2 ниже. Тогда в `Items/Item_Revolver.json`
+> нужно вернуть `"prefabAddress": "Danil.Revolver"` и коллайдеры от ProtoGun.
+
+
 Шестизарядный револьвер с настоящей 3D-моделью.
 
 | Действие | Как |

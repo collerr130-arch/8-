@@ -5,21 +5,21 @@
   "sensitiveFilterBehaviour": "Discard",
   "version": 4,
   "localizationId": null,
-  "displayName": "Revolver",
-  "description": "Six-shot revolver. Trigger to fire, alternate use or a quick wrist flick to reload.",
+  "displayName": "Revolver (Dagger)",
+  "description": "A dagger that shoots like a six-shot revolver. Trigger to fire from the blade tip, alternate use or a wrist flick to reload.",
   "author": "Danil",
   "valueType": "Gold",
   "value": 0.0,
   "rewardValue": 0.0,
   "tier": 1,
-  "flags": "None",
+  "flags": "Throwable, Spinnable, Jabbing",
   "levelRequired": 0,
   "category": "Daggers",
   "iconEffectId": null,
   "preferredItemCenter": "Mass",
   "drainImbueWhenIdle": true,
-  "prefabAddress": "Danil.Revolver",
-  "iconAddress": null,
+  "prefabAddress": "Bas.Item.Melee.Dagger.Common",
+  "iconAddress": "Bas.Item.Melee.Dagger.Common.Icon[wpn_DA02_common]",
   "closeUpIconAddress": null,
   "pooledCount": 0,
   "androidPooledCount": 0,
@@ -34,7 +34,7 @@
   "snapAudioContainerAddress": "Bas.AudioGroup.Snap.Dagger",
   "snapAudioVolume_dB": 0.0,
   "overrideMassAndDrag": true,
-  "mass": 1.1,
+  "mass": 0.65,
   "drag": 0.4,
   "angularDrag": 0.05,
   "focusRegenMultiplier": 1.0,
@@ -221,6 +221,59 @@
       "defenseHasPriority": false
     },
     {
+      "$type": "ThunderRoad.ItemModuleStats, ThunderRoad",
+      "stats": [
+        {
+          "$type": "ThunderRoad.ItemStatInt, ThunderRoad",
+          "value": 4,
+          "useStarIcons": true,
+          "name": "FleshDamage"
+        },
+        {
+          "$type": "ThunderRoad.ItemStatInt, ThunderRoad",
+          "value": 3,
+          "useStarIcons": true,
+          "name": "LeatherDamage"
+        },
+        {
+          "$type": "ThunderRoad.ItemStatInt, ThunderRoad",
+          "value": 0,
+          "useStarIcons": true,
+          "name": "PlateDamage"
+        },
+        {
+          "$type": "ThunderRoad.ItemStatInt, ThunderRoad",
+          "value": 4,
+          "useStarIcons": true,
+          "name": "Penetration"
+        },
+        {
+          "$type": "ThunderRoad.ItemStatInt, ThunderRoad",
+          "value": 1,
+          "useStarIcons": true,
+          "name": "Dismemberment"
+        },
+        {
+          "$type": "ThunderRoad.ItemStatInt, ThunderRoad",
+          "value": 0,
+          "useStarIcons": true,
+          "name": "Stagger"
+        },
+        {
+          "$type": "ThunderRoad.ItemStatInt, ThunderRoad",
+          "value": 2,
+          "useStarIcons": true,
+          "name": "Imbue"
+        },
+        {
+          "$type": "ThunderRoad.ItemStatInt, ThunderRoad",
+          "value": 5,
+          "useStarIcons": true,
+          "name": "Handling"
+        }
+      ]
+    },
+    {
       "$type": "Revolver.ItemModuleRevolver, Revolver",
       "damage": 35.0,
       "headshotMultiplier": 3.0,
@@ -244,11 +297,21 @@
   "colliderGroups": [
     {
       "$type": "ThunderRoad.ItemData+ColliderGroup, ThunderRoad",
-      "transformName": "Mesh",
-      "colliderGroupId": "PropMetal"
+      "transformName": "Blades",
+      "colliderGroupId": "BladeDagger"
     }
   ],
   "damagers": [
+    {
+      "$type": "ThunderRoad.ItemData+Damager, ThunderRoad",
+      "transformName": "Pierce",
+      "damagerID": "DaggerPierce"
+    },
+    {
+      "$type": "ThunderRoad.ItemData+Damager, ThunderRoad",
+      "transformName": "Slash",
+      "damagerID": "DaggerSlash"
+    },
     {
       "$type": "ThunderRoad.ItemData+Damager, ThunderRoad",
       "transformName": "Blunt",
@@ -260,15 +323,21 @@
       "$type": "ThunderRoad.ItemData+Interactable, ThunderRoad",
       "transformName": "Handle",
       "interactableId": "ObjectHandleLight"
-    },
-    {
-      "$type": "ThunderRoad.ItemData+Interactable, ThunderRoad",
-      "transformName": "BottomHandle",
-      "interactableId": "ObjectHandleLight"
     }
   ],
   "effectHinges": [],
-  "whooshs": [],
+  "whooshs": [
+    {
+      "$type": "ThunderRoad.ItemData+Whoosh, ThunderRoad",
+      "transformName": "Whoosh",
+      "effectId": "WhooshDagger",
+      "trigger": "Always",
+      "stopOnSnap": true,
+      "minVelocity": 3.0,
+      "maxVelocity": 10.0,
+      "dampening": 0.1
+    }
+  ],
   "entityModules": [],
   "groupPath": null
 }

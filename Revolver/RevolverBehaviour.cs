@@ -21,6 +21,11 @@ namespace Revolver
         private float nextShotTime;
         private float reloadDoneTime;
         private bool reloading;
+        private float autoReloadAt = -1f;
+
+        // Gunslinger spin during reload: visual copies of the meshes turn around the trigger finger.
+        private Transform spinPivot;
+        private readonly List<MeshRenderer> hiddenRenderers = new List<MeshRenderer>();
 
         // Dead eye: while time is slowed, the trigger marks targets; they are all shot when it ends.
         private readonly List<Mark> marks = new List<Mark>();
@@ -53,6 +58,7 @@ namespace Revolver
         {
             if (item != null) item.OnHeldActionEvent -= OnHeldAction;
             ClearMarks();
+            EndSpin();
             DeadEyeFilter.Hide(this);
         }
 
@@ -70,6 +76,12 @@ namespace Revolver
         {
             if (item == null) return;
             UpdateDeadEye();
+
+            if (autoReloadAt > 0f && Time.time >= autoReloadAt && !executing && !deadEye)
+            {
+                autoReloadAt = -1f;
+                StartReload(item.mainHandler);
+            }
 
             if (reloading && Time.time >= reloadDoneTime)
             {
@@ -96,6 +108,7 @@ namespace Revolver
             {
                 RevolverFx.PlayEmpty(Muzzle.position, module.volume);
                 Haptic(hand, 0.2f);
+                if (module.autoReload) StartReload(hand);
                 return;
             }
             Shoot(AimAssist(Muzzle.position, Muzzle.forward), hand);
@@ -120,6 +133,7 @@ namespace Revolver
             Haptic(hand, 1f);
             Recoil();
             if (drum != null) drum.Rotate(Muzzle.forward, 60f, Space.World);
+            if (ammo <= 0 && module.autoReload && !executing) autoReloadAt = Time.time + module.autoReloadDelay;
         }
 
         // ------------------------------------------------------------ dead eye
@@ -186,6 +200,7 @@ namespace Revolver
                 yield return new WaitForSecondsRealtime(module.deadEyeShotInterval);
             }
             executing = false;
+            if (ammo <= 0 && module.autoReload) autoReloadAt = Time.time + module.autoReloadDelay;
         }
 
         private void ClearMarks()
@@ -200,8 +215,67 @@ namespace Revolver
             if (reloading || executing || deadEye || ammo >= module.maxAmmo) return;
             reloading = true;
             reloadDoneTime = Time.time + module.reloadTime;
+            autoReloadAt = -1f;
+            if (module.spinOnReload) StartCoroutine(Spin(module.reloadTime));
             RevolverFx.PlayReloadStart(Muzzle.position, module.volume);
             Haptic(hand, 0.4f);
+        }
+
+        /// <summary>
+        /// Twirl the revolver around the trigger finger. Only copies of the visible meshes
+        /// rotate; colliders and the hand grip stay put, so physics and the hand don't jerk.
+        /// </summary>
+        private IEnumerator Spin(float duration)
+        {
+            EndSpin();
+            Transform muzzleTransform = Muzzle;
+            Handle handle = item.mainHandleRight != null ? item.mainHandleRight : GetComponentInChildren<Handle>();
+            Vector3 pivotPoint = handle != null
+                ? handle.transform.position + muzzleTransform.forward * 0.03f
+                : transform.position;
+
+            spinPivot = new GameObject("RevolverSpin").transform;
+            spinPivot.SetParent(transform, false);
+            spinPivot.position = pivotPoint;
+            spinPivot.rotation = transform.rotation;
+            Vector3 axis = transform.InverseTransformDirection(muzzleTransform.right);
+
+            foreach (MeshRenderer renderer in GetComponentsInChildren<MeshRenderer>(false))
+            {
+                if (!renderer.enabled) continue;
+                MeshFilter filter = renderer.GetComponent<MeshFilter>();
+                if (filter == null || filter.sharedMesh == null) continue;
+
+                GameObject copy = new GameObject(renderer.name + "_Spin");
+                copy.transform.SetPositionAndRotation(renderer.transform.position, renderer.transform.rotation);
+                copy.transform.localScale = renderer.transform.lossyScale;
+                copy.transform.SetParent(spinPivot, true);
+                copy.AddComponent<MeshFilter>().sharedMesh = filter.sharedMesh;
+                copy.AddComponent<MeshRenderer>().sharedMaterials = renderer.sharedMaterials;
+
+                renderer.enabled = false;
+                hiddenRenderers.Add(renderer);
+            }
+
+            float elapsed = 0f;
+            while (elapsed < duration && spinPivot != null)
+            {
+                elapsed += Time.deltaTime;
+                float k = Mathf.Clamp01(elapsed / duration);
+                k = 1f - (1f - k) * (1f - k);                        // fast start, settles at the end
+                spinPivot.localRotation = Quaternion.AngleAxis(-360f * module.spinTurns * k, axis);
+                yield return null;
+            }
+            EndSpin();
+        }
+
+        private void EndSpin()
+        {
+            foreach (MeshRenderer renderer in hiddenRenderers)
+                if (renderer != null) renderer.enabled = true;
+            hiddenRenderers.Clear();
+            if (spinPivot != null) Destroy(spinPivot.gameObject);
+            spinPivot = null;
         }
 
         /// <summary>Nearest hit along the ray, ignoring the gun itself and the player.</summary>

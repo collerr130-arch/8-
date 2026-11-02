@@ -14,7 +14,11 @@ namespace Revolver
         public float range = 150f;
         public int maxAmmo = 6;
         public float fireCooldown = 0.25f;
-        public float reloadTime = 0.6f;
+        public float reloadTime = 0.9f;
+        public bool autoReload = true;          // reload by itself when the cylinder is empty
+        public float autoReloadDelay = 0.3f;
+        public bool spinOnReload = true;        // twirl around the trigger finger while reloading
+        public float spinTurns = 2f;
 
         // Muzzle kicks up (rad/s) and the gun is pushed back (m/s).
         public float recoilAngle = 18f;

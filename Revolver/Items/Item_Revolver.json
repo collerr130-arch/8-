@@ -281,7 +281,7 @@
       "range": 150.0,
       "maxAmmo": 6,
       "fireCooldown": 0.25,
-      "reloadTime": 0.6,
+      "reloadTime": 0.9,
       "recoilAngle": 18.0,
       "recoilForce": 3.5,
       "impactForce": 45.0,
@@ -294,7 +294,11 @@
       "drumName": "Drum",
       "deadEye": true,
       "deadEyeTimeScale": 0.9,
-      "deadEyeShotInterval": 0.15
+      "deadEyeShotInterval": 0.15,
+      "autoReload": true,
+      "autoReloadDelay": 0.3,
+      "spinOnReload": true,
+      "spinTurns": 2.0
     }
   ],
   "colliderGroups": [

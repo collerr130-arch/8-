@@ -4,28 +4,40 @@ using UnityEngine;
 namespace HomingThrow
 {
     /// <summary>
-    /// Lives on a thrown item: steers it at the nearest enemy, reflects it off
-    /// walls and enemies, picks the next enemy after each hit, and optionally
-    /// flies back to the player at the end. Removes itself when done.
+    /// Lives on a thrown item and flies it like a ricochet shield:
+    /// - Seeking: heads for the target, locking straight onto it when close.
+    /// - Missed: if it flew past the target, it stops turning and flies straight
+    ///   until it hits a wall; the wall bounce sends it straight at the target.
+    /// - After hitting an enemy it ricochets to the next one.
+    /// - Returning: after the last bounce it flies back to the player.
+    /// Removes itself when done.
     /// </summary>
     public class HomingProjectile : MonoBehaviour
     {
-        private const float StartDelay = 0.05f;   // let the throw velocity settle, clear the hand
-        private const float MaxFlightTime = 10f;
+        private enum State { Seeking, Missed, Returning }
+
+        private const float StartDelay = 0.05f;    // let the throw velocity settle, clear the hand
+        private const float MaxFlightTime = 12f;
         private const float ReturnTime = 5f;
         private const float CatchDistance = 1.2f;
         private const float MinThrowSpeed = 3f;
+        private const float LockOnDistance = 4f;   // closer than this: fly dead straight at the target
+        private const float MissDistance = 6f;     // passing the target within this counts as a miss
+        private const float MaxMissedTime = 1.5f;  // no wall in that time: turn back towards the target
 
         private Item item;
+        private Rigidbody body;
+        private CollisionDetectionMode originalDetection;
         private Creature target;
         private Creature lastHit;
+        private State state;
         private int bounces;
         private float speed;
         private float startTime;
         private float endTime;
+        private float missedUntil;
         private float ignoreCollisionsUntil;
         private bool started;
-        private bool returning;
         private bool originalGravity;
         private Vector3 lastVelocity;
 
@@ -55,40 +67,76 @@ namespace HomingThrow
             if (!HomingThrowScript.Enabled || Time.time > endTime
                 || item.handlers.Count > 0 || item.isTelekinesisGrabbed || item.isPenetrating)
             {
-                Stop();
+                Destroy(this);
                 return;
             }
 
-            Vector3 position = item.transform.position;
-            Vector3 goal;
-
-            if (returning)
+            switch (state)
             {
-                Creature player = Player.currentCreature;
-                if (player == null) { Stop(); return; }
-                goal = player.ragdoll.targetPart.transform.position + Vector3.up * 0.3f;
-                if ((goal - position).sqrMagnitude < CatchDistance * CatchDistance)
-                {
-                    // Slow down right in front of the player so it can be caught.
-                    item.physicBody.velocity *= 0.15f;
-                    Stop();
-                    return;
-                }
+                case State.Seeking: Seek(); break;
+                case State.Missed: FlyStraight(); break;
+                case State.Returning: Return(); break;
+            }
+        }
+
+        private void Seek()
+        {
+            if (!IsValidTarget(target))
+            {
+                target = FindTarget(item.physicBody.velocity, lastHit, 180f);
+                if (target == null) { EndRicochet(); return; }
+            }
+
+            Vector3 toTarget = TargetPoint(target) - item.transform.position;
+            float distance = toTarget.magnitude;
+            Vector3 velocity = item.physicBody.velocity;
+
+            // Flew past it: don't circle around, keep going to the next wall.
+            if (distance < MissDistance && Vector3.Dot(velocity, toTarget) < 0f)
+            {
+                state = State.Missed;
+                missedUntil = Time.time + MaxMissedTime;
+                SetVelocity(velocity.normalized * speed);
+                return;
+            }
+
+            Vector3 desired = toTarget.normalized * speed;
+            if (distance < LockOnDistance)
+            {
+                SetVelocity(desired);
             }
             else
             {
-                if (!IsValidTarget(target))
-                {
-                    target = FindTarget(item.physicBody.velocity, lastHit, 180f);
-                    if (target == null) { EndRicochet(); return; }
-                }
-                goal = target.ragdoll.targetPart.transform.position;
+                float t = Mathf.Clamp01(HomingThrowScript.Steering * Time.fixedDeltaTime);
+                SetVelocity(Vector3.Lerp(velocity, desired, t).normalized * speed);
             }
+        }
 
-            Vector3 desired = (goal - position).normalized * speed;
-            float t = Mathf.Clamp01(HomingThrowScript.Steering * Time.fixedDeltaTime);
-            item.physicBody.velocity = Vector3.Lerp(item.physicBody.velocity, desired, t).normalized * speed;
-            lastVelocity = item.physicBody.velocity;
+        private void FlyStraight()
+        {
+            if (Time.time > missedUntil)
+            {
+                state = State.Seeking; // open space, no wall: just turn back
+                return;
+            }
+            Vector3 velocity = lastVelocity.sqrMagnitude > 0.01f ? lastVelocity : item.physicBody.velocity;
+            SetVelocity(velocity.normalized * speed);
+        }
+
+        private void Return()
+        {
+            Creature player = Player.currentCreature;
+            if (player == null) { Destroy(this); return; }
+            Vector3 goal = player.ragdoll.targetPart.transform.position + Vector3.up * 0.3f;
+            Vector3 toGoal = goal - item.transform.position;
+            if (toGoal.magnitude < CatchDistance)
+            {
+                // Slow down right in front of the player so it can be caught.
+                item.physicBody.velocity = toGoal.normalized * 1f;
+                Destroy(this);
+                return;
+            }
+            SetVelocity(toGoal.normalized * speed);
         }
 
         private bool Begin()
@@ -100,9 +148,19 @@ namespace HomingThrow
             if (target == null) return false; // nobody in front: a normal throw
 
             started = true;
+            state = State.Seeking;
             speed = Mathf.Max(HomingThrowScript.Speed, velocity.magnitude);
             originalGravity = item.physicBody.useGravity;
             item.physicBody.useGravity = false;
+
+            // Fast items can tunnel through thin enemies and walls without this.
+            body = item.gameObject.GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                originalDetection = body.collisionDetectionMode;
+                body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            }
+
             lastVelocity = velocity;
             return true;
         }
@@ -127,27 +185,46 @@ namespace HomingThrow
             Vector3 reflected = Vector3.Reflect(lastVelocity, normal).normalized;
             if (reflected == Vector3.zero) reflected = normal;
 
-            if (returning)
+            if (state == State.Returning)
             {
-                item.physicBody.velocity = reflected * speed;
-                lastVelocity = item.physicBody.velocity;
+                SetVelocity(reflected * speed);
                 return;
             }
 
             bounces++;
-            if (hit != null) lastHit = hit;
-
             if (bounces > Mathf.RoundToInt(HomingThrowScript.MaxBounces))
             {
                 EndRicochet();
                 return;
             }
 
-            // Any direction is fine after a ricochet; prefer someone we did not just hit.
-            target = FindTarget(reflected, lastHit, 180f);
-            item.physicBody.velocity = reflected * speed;
-            lastVelocity = item.physicBody.velocity;
-            if (target == null) EndRicochet();
+            if (hit != null)
+            {
+                // Hit an enemy: ricochet on to the next one (or the same one if it's alone).
+                lastHit = hit;
+                target = FindTarget(reflected, lastHit, 180f);
+                if (target == null) { EndRicochet(); return; }
+                SetVelocity(reflected * speed);
+            }
+            else
+            {
+                // Hit a wall: bank the shot straight into the target.
+                if (!IsValidTarget(target)) target = FindTarget(reflected, lastHit, 180f);
+                if (target == null) { EndRicochet(); return; }
+                SetVelocity((TargetPoint(target) - item.transform.position).normalized * speed);
+            }
+            state = State.Seeking;
+        }
+
+        private void SetVelocity(Vector3 velocity)
+        {
+            item.physicBody.velocity = velocity;
+            lastVelocity = velocity;
+        }
+
+        private static Vector3 TargetPoint(Creature creature)
+        {
+            return creature.ragdoll.targetPart.transform.position;
         }
 
         private Creature FindTarget(Vector3 direction, Creature avoid, float cone)
@@ -163,7 +240,7 @@ namespace HomingThrow
                 Creature creature = Creature.allActive[i];
                 if (!IsValidTarget(creature) || creature == avoid) continue;
 
-                Vector3 toCreature = creature.ragdoll.targetPart.transform.position - position;
+                Vector3 toCreature = TargetPoint(creature) - position;
                 float distance = toCreature.magnitude;
                 if (distance > range) continue;
 
@@ -176,7 +253,7 @@ namespace HomingThrow
 
             // Only one enemy left: keep hitting it.
             if (best == null && IsValidTarget(avoid)
-                && (avoid.ragdoll.targetPart.transform.position - position).magnitude <= range)
+                && (TargetPoint(avoid) - position).magnitude <= range)
                 best = avoid;
             return best;
         }
@@ -191,25 +268,21 @@ namespace HomingThrow
         {
             if (HomingThrowScript.ReturnToPlayer && Player.currentCreature != null)
             {
-                returning = true;
+                state = State.Returning;
                 target = null;
                 endTime = Time.time + ReturnTime;
             }
             else
             {
-                Stop();
+                Destroy(this);
             }
-        }
-
-        private void Stop()
-        {
-            Destroy(this);
         }
 
         private void OnDestroy()
         {
-            if (started && item != null && item.physicBody != null)
-                item.physicBody.useGravity = originalGravity;
+            if (!started || item == null) return;
+            if (item.physicBody != null) item.physicBody.useGravity = originalGravity;
+            if (body != null) body.collisionDetectionMode = originalDetection;
         }
     }
 }

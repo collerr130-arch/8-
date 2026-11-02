@@ -18,7 +18,7 @@ namespace HomingThrow
 
         [ModOptionSlider, ModOptionFloatValues(1f, 30f, 1f)]
         [ModOption("Steering", "How hard the item turns towards its target", category = "Homing Throw")]
-        public static float Steering = 8f;
+        public static float Steering = 15f;
 
         [ModOptionSlider, ModOptionFloatValues(0f, 20f, 1f)]
         [ModOption("Max Bounces", "How many hits/walls before the item stops ricocheting", category = "Homing Throw")]

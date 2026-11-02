@@ -11,9 +11,13 @@ if (-not (Test-Path "$GameDir\BladeAndSorcery_Data\Managed\ThunderRoad.dll")) {
     exit 1
 }
 # Find the .NET SDK, or install it for this user (no admin rights, no winget needed).
-$dotnet = (Get-Command dotnet -ErrorAction SilentlyContinue).Source
+# A dotnet.exe with only the runtime cannot build, so look for one that lists an SDK.
+function Test-Sdk($exe) { $exe -and (Test-Path $exe) -and (& $exe --list-sdks 2>$null | Select-Object -First 1) }
 $localDotnet = "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe"
-if (-not $dotnet -and (Test-Path $localDotnet)) { $dotnet = $localDotnet }
+$dotnet = $null
+$systemDotnet = (Get-Command dotnet -ErrorAction SilentlyContinue).Source
+if (Test-Sdk $systemDotnet) { $dotnet = $systemDotnet }
+elseif (Test-Sdk $localDotnet) { $dotnet = $localDotnet }
 if (-not $dotnet) {
     Write-Host "Installing .NET SDK 8 (one time, a few minutes)..." -ForegroundColor Yellow
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12

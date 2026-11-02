@@ -29,6 +29,7 @@ namespace HomingThrow
         private Rigidbody body;
         private CollisionDetectionMode originalDetection;
         private Creature target;
+        private Transform aimPoint;
         private Creature lastHit;
         private State state;
         private int bounces;
@@ -83,11 +84,11 @@ namespace HomingThrow
         {
             if (!IsValidTarget(target))
             {
-                target = FindTarget(item.physicBody.velocity, lastHit, 180f);
+                SetTarget(FindTarget(item.physicBody.velocity, lastHit, 180f));
                 if (target == null) { EndRicochet(); return; }
             }
 
-            Vector3 toTarget = TargetPoint(target) - item.transform.position;
+            Vector3 toTarget = AimPosition() - item.transform.position;
             float distance = toTarget.magnitude;
             Vector3 velocity = item.physicBody.velocity;
 
@@ -144,8 +145,8 @@ namespace HomingThrow
             Vector3 velocity = item.physicBody.velocity;
             if (HomingThrowScript.IgnoreWeakThrows && velocity.magnitude < MinThrowSpeed) return false;
 
-            target = FindTarget(velocity, null, HomingThrowScript.AimCone);
-            if (target == null) return false; // nobody in front: a normal throw
+            Creature first = FindTarget(velocity, null, HomingThrowScript.AimCone);
+            if (first == null) return false; // nobody in front: a normal throw
 
             started = true;
             state = State.Seeking;
@@ -162,6 +163,7 @@ namespace HomingThrow
             }
 
             lastVelocity = velocity;
+            SetTarget(first);
             return true;
         }
 
@@ -191,6 +193,8 @@ namespace HomingThrow
                 return;
             }
 
+            if (hit != null) Strike(hit, collision, normal);
+
             bounces++;
             if (bounces > Mathf.RoundToInt(HomingThrowScript.MaxBounces))
             {
@@ -202,18 +206,66 @@ namespace HomingThrow
             {
                 // Hit an enemy: ricochet on to the next one (or the same one if it's alone).
                 lastHit = hit;
-                target = FindTarget(reflected, lastHit, 180f);
+                SetTarget(FindTarget(reflected, lastHit, 180f));
                 if (target == null) { EndRicochet(); return; }
                 SetVelocity(reflected * speed);
             }
             else
             {
                 // Hit a wall: bank the shot straight into the target.
-                if (!IsValidTarget(target)) target = FindTarget(reflected, lastHit, 180f);
+                if (!IsValidTarget(target)) SetTarget(FindTarget(reflected, lastHit, 180f));
+                else HitEffects.Laser(item.transform.position, AimPosition());
                 if (target == null) { EndRicochet(); return; }
-                SetVelocity((TargetPoint(target) - item.transform.position).normalized * speed);
+                SetVelocity((AimPosition() - item.transform.position).normalized * speed);
             }
             state = State.Seeking;
+        }
+
+        /// <summary>Sound, red hitmarker, knock-down and push for an enemy that was hit.</summary>
+        private void Strike(Creature hit, Collision collision, Vector3 normal)
+        {
+            Vector3 point = collision.contactCount > 0 ? collision.GetContact(0).point : item.transform.position;
+            HitEffects.PlayHit(point);
+            HitEffects.HitMarker(point, normal);
+
+            if (HomingThrowScript.KnockDown && hit.ragdoll != null)
+                hit.ragdoll.SetState(Ragdoll.State.Destabilized);
+
+            if (HomingThrowScript.KnockForce > 0f && collision.rigidbody != null)
+                collision.rigidbody.AddForce(lastVelocity.normalized * HomingThrowScript.KnockForce, ForceMode.Impulse);
+        }
+
+        private void SetTarget(Creature creature)
+        {
+            target = creature;
+            aimPoint = creature != null ? ChooseAimPoint(creature) : null;
+            if (creature == null) return;
+            HitEffects.Laser(item.transform.position, AimPosition());
+            HitEffects.PlayLockOn(item.transform.position);
+        }
+
+        /// <summary>The closest weak point (head, neck, heart...) or the chest.</summary>
+        private Transform ChooseAimPoint(Creature creature)
+        {
+            Transform best = creature.ragdoll.targetPart.transform;
+            if (!HomingThrowScript.AimWeakPoints || creature.weakpoints == null) return best;
+
+            Vector3 position = item.transform.position;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < creature.weakpoints.Count; i++)
+            {
+                Transform weakpoint = creature.weakpoints[i];
+                if (weakpoint == null) continue;
+                float distance = (weakpoint.position - position).sqrMagnitude;
+                if (distance < bestDistance) { bestDistance = distance; best = weakpoint; }
+            }
+            return best;
+        }
+
+        private Vector3 AimPosition()
+        {
+            if (aimPoint == null && target != null) aimPoint = ChooseAimPoint(target);
+            return aimPoint != null ? aimPoint.position : TargetPoint(target);
         }
 
         private void SetVelocity(Vector3 velocity)
@@ -270,6 +322,7 @@ namespace HomingThrow
             {
                 state = State.Returning;
                 target = null;
+                aimPoint = null;
                 endTime = Time.time + ReturnTime;
             }
             else

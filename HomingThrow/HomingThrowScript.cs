@@ -38,6 +38,26 @@ namespace HomingThrow
         [ModOption("Ignore Weak Throws", "Only fast throws home in, so simply dropping items stays normal", category = "Homing Throw")]
         public static bool IgnoreWeakThrows = true;
 
+        [ModOption("Aim Weak Points", "Fly at weak points (head, neck, heart) instead of the chest", category = "Homing Throw")]
+        public static bool AimWeakPoints = true;
+
+        [ModOption("Knock Down", "Enemies hit by a homing item fall over", category = "Homing Throw")]
+        public static bool KnockDown = true;
+
+        [ModOptionSlider, ModOptionFloatValues(0f, 100f, 5f)]
+        [ModOption("Knock Force", "Extra push given to the body part that was hit", category = "Homing Throw")]
+        public static float KnockForce = 35f;
+
+        [ModOption("Hit Sound", "Play a sound on every hit and lock-on", category = "Homing Throw")]
+        public static bool HitSound = true;
+
+        [ModOptionSlider, ModOptionFloatValues(0f, 1f, 0.1f)]
+        [ModOption("Sound Volume", "Volume of the hit sound", category = "Homing Throw")]
+        public static float SoundVolume = 0.8f;
+
+        [ModOption("Red Laser", "Red laser to the target and red hitmarker on impact", category = "Homing Throw")]
+        public static bool RedLaser = true;
+
         private Creature hooked;
 
         public override void ScriptEnable()

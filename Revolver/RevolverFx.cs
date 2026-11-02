@@ -11,6 +11,7 @@ namespace Revolver
     {
         private const int Rate = 44100;
         private static readonly Color Red = new Color(1f, 0.05f, 0.05f, 1f);
+        private static readonly Color Yellow = new Color(1f, 0.85f, 0.1f, 1f);
         private static readonly Color SparkColor = new Color(1f, 0.6f, 0.2f, 1f);
 
         private static AudioClip shot, empty, reloadStart, reloadDone, hit, mark;
@@ -32,7 +33,7 @@ namespace Revolver
 
         public static void Tracer(Vector3 from, Vector3 to)
         {
-            Line(new[] { from, to }, Red, 0.012f, 0.12f);
+            Line(new[] { from, to }, Yellow, 0.012f, 0.12f);
         }
 
         public static void HitMarker(Vector3 point, Vector3 normal)

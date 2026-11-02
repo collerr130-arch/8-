@@ -19,7 +19,21 @@ namespace Revolver
         {
             base.ScriptUpdate();
             if (done) return;
+            try
+            {
+                TrySwapModel();
+            }
+            catch (System.Exception e)
+            {
+                // Never break the game's script loop: give up and keep the dagger.
+                done = true;
+                Debug.LogWarning("[Revolver] Model search failed, keeping the dagger: " + e.Message);
+            }
+        }
 
+        private void TrySwapModel()
+        {
+            if (Time.frameCount % 30 != 0) return; // check twice a second, not every frame
             ItemData revolver = Catalog.GetData<ItemData>("Revolver", false);
             if (revolver == null) return; // catalog not loaded yet
             done = true;

@@ -11,6 +11,10 @@
     <GameManagedDir>$(GameDir)\BladeAndSorcery_Data\Managed</GameManagedDir>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Unity editor tool: compiled by Unity inside the SDK, not part of the mod DLL. -->
+    <Compile Remove="Unity\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>

@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Испорченный переводчик</string>
+    <string name="hint_input">Введите текст для перевода</string>
+    <string name="label_steps">Количество переводов</string>
+    <string name="back_to_source">В конце вернуть на исходный язык</string>
+    <string name="btn_translate">Перевести 5 раз</string>
+    <string name="btn_translate_n">Перевести %1$d раз</string>
+    <string name="btn_copy">Копировать результат</string>
+    <string name="result">Итог</string>
+    <string name="copied">Скопировано</string>
+    <string name="empty_input">Введите текст</string>
+</resources>

@@ -282,8 +282,8 @@
       "maxAmmo": 6,
       "fireCooldown": 0.25,
       "reloadTime": 0.6,
-      "recoilAngle": 7.0,
-      "recoilForce": 1.2,
+      "recoilAngle": 18.0,
+      "recoilForce": 3.5,
       "impactForce": 45.0,
       "knockDown": true,
       "aimAssistAngle": 4.0,
@@ -291,7 +291,10 @@
       "redTracer": true,
       "volume": 1.0,
       "muzzleName": "Muzzle",
-      "drumName": "Drum"
+      "drumName": "Drum",
+      "deadEye": true,
+      "deadEyeTimeScale": 0.9,
+      "deadEyeShotInterval": 0.15
     }
   ],
   "colliderGroups": [

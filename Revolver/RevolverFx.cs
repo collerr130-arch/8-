@@ -13,7 +13,7 @@ namespace Revolver
         private static readonly Color Red = new Color(1f, 0.05f, 0.05f, 1f);
         private static readonly Color SparkColor = new Color(1f, 0.6f, 0.2f, 1f);
 
-        private static AudioClip shot, empty, reloadStart, reloadDone, hit;
+        private static AudioClip shot, empty, reloadStart, reloadDone, hit, mark;
         private static Shader lineShader;
         private static bool shaderSearched;
         private static readonly Dictionary<Color, Material> materials = new Dictionary<Color, Material>();
@@ -22,6 +22,7 @@ namespace Revolver
         public static void PlayEmpty(Vector3 at, float volume) => Play(empty ?? (empty = MakeClick(3200f, 0.04f)), at, volume * 0.6f);
         public static void PlayReloadStart(Vector3 at, float volume) => Play(reloadStart ?? (reloadStart = MakeReloadStart()), at, volume * 0.7f);
         public static void PlayReloadDone(Vector3 at, float volume) => Play(reloadDone ?? (reloadDone = MakeClick(1800f, 0.07f)), at, volume * 0.8f);
+        public static void PlayMark(Vector3 at, float volume) => Play(mark ?? (mark = MakeClick(2600f, 0.06f)), at, volume * 0.7f);
         public static void PlayHit(Vector3 at, float volume) => Play(hit ?? (hit = MakeHit()), at, volume * 0.7f);
 
         private static void Play(AudioClip clip, Vector3 at, float volume)
@@ -39,6 +40,38 @@ namespace Revolver
             Basis(normal, out Vector3 a, out Vector3 b);
             Vector3[] dirs = { (a + b).normalized, (a - b).normalized, (-a + b).normalized, (-a - b).normalized };
             foreach (Vector3 d in dirs) Line(new[] { point + d * 0.05f, point + d * 0.2f }, Red, 0.02f, 0.3f);
+        }
+
+        /// <summary>A red X that stays on the marked spot (and moves with it) until removed.</summary>
+        public static GameObject MarkCross(Transform anchor, Vector3 point, Vector3 normal)
+        {
+            Basis(normal, out Vector3 a, out Vector3 b);
+            GameObject root = new GameObject("RevolverMark");
+            root.transform.SetParent(anchor, true);
+            root.transform.position = point + normal * 0.01f;
+            const float size = 0.09f;
+            for (int i = 0; i < 2; i++)
+            {
+                Vector3 d = i == 0 ? (a + b).normalized : (a - b).normalized;
+                Material material = GetMaterial(Red);
+                if (material == null) break;
+                GameObject go = new GameObject("Stroke");
+                go.transform.SetParent(root.transform, false);
+                LineRenderer line = go.AddComponent<LineRenderer>();
+                line.useWorldSpace = false; // local space: the cross moves with the anchor
+                line.positionCount = 2;
+                line.SetPositions(new[] { go.transform.InverseTransformPoint(root.transform.position - d * size),
+                                          go.transform.InverseTransformPoint(root.transform.position + d * size) });
+                line.sharedMaterial = material;
+                line.startColor = Red;
+                line.endColor = Red;
+                line.startWidth = 0.018f;
+                line.endWidth = 0.018f;
+                line.numCapVertices = 2;
+                line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                line.receiveShadows = false;
+            }
+            return root;
         }
 
         public static void Spark(Vector3 point, Vector3 normal)

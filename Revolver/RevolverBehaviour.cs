@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using ThunderRoad;
 using UnityEngine;
 
@@ -20,6 +22,18 @@ namespace Revolver
         private float reloadDoneTime;
         private bool reloading;
 
+        // Dead eye: while time is slowed, the trigger marks targets; they are all shot when it ends.
+        private readonly List<Mark> marks = new List<Mark>();
+        private bool deadEye;
+        private bool executing;
+
+        private struct Mark
+        {
+            public Transform anchor;     // follows the body part / object that was marked
+            public Vector3 localPoint;
+            public GameObject marker;
+        }
+
         // Borrowed models have no muzzle: build one from the colliders once the item is in the world.
         private Transform Muzzle => muzzle != null ? muzzle : (muzzle = CreateAutoMuzzle());
 
@@ -38,17 +52,24 @@ namespace Revolver
         private void OnDestroy()
         {
             if (item != null) item.OnHeldActionEvent -= OnHeldAction;
+            ClearMarks();
+            DeadEyeFilter.Hide(this);
         }
 
         private void OnHeldAction(RagdollHand hand, Handle handle, Interactable.Action action)
         {
-            if (action == Interactable.Action.UseStart) TryFire(hand);
+            if (action == Interactable.Action.UseStart)
+            {
+                if (deadEye) TryMark(hand);
+                else TryFire(hand);
+            }
             else if (action == Interactable.Action.AlternateUseStart) StartReload(hand);
         }
 
         private void Update()
         {
             if (item == null) return;
+            UpdateDeadEye();
 
             if (reloading && Time.time >= reloadDoneTime)
             {
@@ -68,7 +89,7 @@ namespace Revolver
 
         private void TryFire(RagdollHand hand)
         {
-            if (reloading || Time.time < nextShotTime) return;
+            if (reloading || executing || Time.time < nextShotTime) return;
             nextShotTime = Time.time + module.fireCooldown;
 
             if (ammo <= 0)
@@ -77,10 +98,14 @@ namespace Revolver
                 Haptic(hand, 0.2f);
                 return;
             }
-            ammo--;
+            Shoot(AimAssist(Muzzle.position, Muzzle.forward), hand);
+        }
 
+        /// <summary>One bullet along <paramref name="direction"/> from the muzzle.</summary>
+        private void Shoot(Vector3 direction, RagdollHand hand)
+        {
+            ammo--;
             Vector3 origin = Muzzle.position;
-            Vector3 direction = AimAssist(origin, Muzzle.forward);
             Vector3 end = origin + direction * module.range;
 
             if (Cast(origin, direction, out RaycastHit hit))
@@ -97,9 +122,82 @@ namespace Revolver
             if (drum != null) drum.Rotate(Muzzle.forward, 60f, Space.World);
         }
 
+        // ------------------------------------------------------------ dead eye
+
+        private void UpdateDeadEye()
+        {
+            bool held = item.handlers.Count > 0 && item.mainHandler != null
+                        && item.mainHandler.creature != null && item.mainHandler.creature.isPlayer;
+            bool slow = module.deadEye && Time.timeScale < module.deadEyeTimeScale;
+
+            if (!deadEye && slow && held && !executing)
+            {
+                deadEye = true;
+                DeadEyeFilter.Show(this);
+                RevolverFx.PlayMark(Muzzle.position, module.volume);
+            }
+            else if (deadEye && (!slow || !held))
+            {
+                deadEye = false;
+                DeadEyeFilter.Hide(this);
+                if (held && marks.Count > 0) StartCoroutine(ExecuteMarks());
+                else ClearMarks();
+            }
+        }
+
+        private void TryMark(RagdollHand hand)
+        {
+            if (reloading || executing) return;
+            if (marks.Count >= ammo)
+            {
+                RevolverFx.PlayEmpty(Muzzle.position, module.volume);
+                Haptic(hand, 0.2f);
+                return;
+            }
+
+            Vector3 origin = Muzzle.position;
+            Vector3 direction = AimAssist(origin, Muzzle.forward);
+            if (!Cast(origin, direction, out RaycastHit hit)) return;
+
+            Transform anchor = hit.collider.transform;
+            Mark mark = new Mark
+            {
+                anchor = anchor,
+                localPoint = anchor.InverseTransformPoint(hit.point),
+                marker = RevolverFx.MarkCross(anchor, hit.point, hit.normal),
+            };
+            marks.Add(mark);
+            RevolverFx.PlayMark(hit.point, module.volume);
+            Haptic(hand, 0.3f);
+        }
+
+        /// <summary>Slow motion is over: fire at every mark, one after another.</summary>
+        private IEnumerator ExecuteMarks()
+        {
+            executing = true;
+            List<Mark> queue = new List<Mark>(marks);
+            marks.Clear();
+            foreach (Mark mark in queue)
+            {
+                if (mark.marker != null) Destroy(mark.marker);
+                if (mark.anchor == null || ammo <= 0) continue;
+                Vector3 target = mark.anchor.TransformPoint(mark.localPoint);
+                Shoot((target - Muzzle.position).normalized, item.mainHandler);
+                yield return new WaitForSecondsRealtime(module.deadEyeShotInterval);
+            }
+            executing = false;
+        }
+
+        private void ClearMarks()
+        {
+            foreach (Mark mark in marks)
+                if (mark.marker != null) Destroy(mark.marker);
+            marks.Clear();
+        }
+
         private void StartReload(RagdollHand hand)
         {
-            if (reloading || ammo >= module.maxAmmo) return;
+            if (reloading || executing || deadEye || ammo >= module.maxAmmo) return;
             reloading = true;
             reloadDoneTime = Time.time + module.reloadTime;
             RevolverFx.PlayReloadStart(Muzzle.position, module.volume);

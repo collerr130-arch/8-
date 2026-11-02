@@ -17,8 +17,8 @@ namespace Revolver
         public float reloadTime = 0.6f;
 
         // Muzzle kicks up (rad/s) and the gun is pushed back (m/s).
-        public float recoilAngle = 7f;
-        public float recoilForce = 1.2f;
+        public float recoilAngle = 18f;
+        public float recoilForce = 3.5f;
 
         // Push given to the body part that was hit.
         public float impactForce = 45f;
@@ -29,6 +29,12 @@ namespace Revolver
 
         // Flick the wrist this fast (rad/s, around the barrel) to reload.
         public float flickReloadSpeed = 14f;
+
+        // Dead eye: with slow motion active and the revolver in hand, the trigger
+        // marks targets (red crosses); when slow motion ends they are shot in turn.
+        public bool deadEye = true;
+        public float deadEyeTimeScale = 0.9f;     // slower than this counts as slow motion
+        public float deadEyeShotInterval = 0.15f; // seconds between the queued shots
 
         public bool redTracer = true;
         public float volume = 1f;
